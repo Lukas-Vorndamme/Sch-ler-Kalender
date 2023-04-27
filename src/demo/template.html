@@ -1,0 +1,266 @@
+<link rel="stylesheet" href="styles.css" />
+<br />
+<body style="font-family: sans-serif">
+  <div class="row text-center">
+    <div class="col-md-4">
+      <div class="btn-group">
+        <div
+          id="back1"
+          class="btn btn-primary"
+          mwlCalendarPreviousView
+          [view]="view"
+          [(viewDate)]="viewDate"
+          (viewDateChange)="closeOpenMonthViewDay()"
+        >
+          Vorheriges
+        </div>
+        <div
+          id="heute"
+          class="btn btn-outline-secondary"
+          mwlCalendarToday
+          [(viewDate)]="viewDate"
+        >
+          Heute
+        </div>
+        <div
+          id="next1"
+          class="btn btn-primary"
+          mwlCalendarNextView
+          [view]="view"
+          [(viewDate)]="viewDate"
+          (viewDateChange)="closeOpenMonthViewDay()"
+        >
+          Nächster
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <h3>{{ viewDate | calendarDate:(view + 'ViewTitle'):'de' }}</h3>
+    </div>
+    <div class="col-md-4">
+      <div class="btn-group">
+        <div
+          id="monthView"
+          class="btn btn-primary"
+          (click)="setView(CalendarView.Month)"
+          [class.active]="view === CalendarView.Month"
+        >
+          Monat
+        </div>
+        <div
+          id="weekView"
+          class="btn btn-primary"
+          (click)="setView(CalendarView.Week)"
+          [class.active]="view === CalendarView.Week"
+        >
+          Woche
+        </div>
+        <div
+          id="dayView"
+          class="btn btn-primary"
+          (click)="setView(CalendarView.Day)"
+          [class.active]="view === CalendarView.Day"
+        >
+          Tag
+        </div>
+      </div>
+    </div>
+  </div>
+  <br />
+  <div [ngSwitch]="view">
+    <mwl-calendar-month-view
+      *ngSwitchCase="CalendarView.Month"
+      [viewDate]="viewDate"
+      [events]="events"
+      [refresh]="refresh"
+      [activeDayIsOpen]="activeDayIsOpen"
+      (dayClicked)="dayClicked($event.day)"
+      (eventClicked)="handleEvent('Clicked', $event.event)"
+      (eventTimesChanged)="eventTimesChanged($event)"
+    >
+    </mwl-calendar-month-view>
+    <mwl-calendar-week-view
+      *ngSwitchCase="CalendarView.Week"
+      [viewDate]="viewDate"
+      [events]="events"
+      [refresh]="refresh"
+      (eventClicked)="handleEvent('Clicked', $event.event)"
+      (eventTimesChanged)="eventTimesChanged($event)"
+    >
+    </mwl-calendar-week-view>
+    <mwl-calendar-day-view
+      *ngSwitchCase="CalendarView.Day"
+      [viewDate]="viewDate"
+      [events]="events"
+      [refresh]="refresh"
+      (eventClicked)="handleEvent('Clicked', $event.event)"
+      (eventTimesChanged)="eventTimesChanged($event)"
+    >
+    </mwl-calendar-day-view>
+  </div>
+
+  <!-- Everything you see below is just for the demo, you don't need to include it in your app -->
+
+  <br /><br /><br />
+  <h3>
+    Event bearbeiten
+
+    <button class="btn btn-primary float-end" (click)="addEvent()">
+      Event hinzufügen
+    </button>
+    <div class="clearfix"></div>
+  </h3>
+
+  <div class="table-responsive">
+    <table class="table table-bordered" id="Table">
+      <thead>
+        <tr>
+          <th>Titel</th>
+          <th>Primär Farbe</th>
+          <th>Sekundär + Schrift Farbe</th>
+          <th>Event Start</th>
+          <th>Event Ende</th>
+          <th>Notizen</th>
+          <th>Pdf Lernzettel</th>
+          <th>Löschen</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr *ngFor="let event of events">
+          <td>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="event.title"
+              (keyup)="refresh.next()"
+            />
+          </td>
+          <td class="align-center">
+            <input
+              type="color"
+              [(ngModel)]="event.color.primary"
+              (change)="refresh.next()"
+            />
+          </td>
+          <td class="align-center">
+            <input
+              type="color"
+              [(ngModel)]="event.color.secondary"
+              (change)="refresh.next()"
+            />
+            <input
+              type="color"
+              [ngModel]="event.color.secondaryText ?? '#1e90ff'"
+              (ngModelChange)="event.color.secondaryText = $event"
+              (change)="refresh.next()"
+            />
+          </td>
+          <td>
+            <input
+              class="form-control"
+              type="text"
+              mwlFlatpickr
+              [(ngModel)]="event.start"
+              (ngModelChange)="refresh.next()"
+              [altInput]="false"
+              [convertModelValue]="true"
+              [enableTime]="true"
+              time_24hr="true"
+              dateFormat="d-m-y  H:i"
+              altFormat="D-M-Y  H:i"
+              placeholder="Not set"
+              [locale]="'de'"
+            />
+          </td>
+          <td>
+            <input
+              class="form-control"
+              type="text"
+              mwlFlatpickr
+              [(ngModel)]="event.end"
+              (ngModelChange)="refresh.next()"
+              [altInput]="false"
+              [convertModelValue]="true"
+              [enableTime]="true"
+              time_24hr="true"
+              dateFormat="d-m-y  H:i"
+              altFormat="D-M-Y  H:i"
+              placeholder="Not set"
+              [locale]="'de'"
+            />
+          </td>
+          <td>
+            <div class="modal" *ngIf="isModalOpen">
+              <div id="div2" class="modal-content">
+                <label id="laböl" for="myInput"> Notiz Feld </label>
+                <textarea
+                  type="text"
+                  id="myInput"
+                  [(ngModel)]="inputData.text"
+                  (input)="onInputChanged($event)"
+                  (blur)="closeModal()"
+                  placeholder="Bitte geben sie ihre Notizen ein"
+                ></textarea>
+                <button
+                  class="button-event"
+                  id="savesave"
+                  (click)="closeModal()"
+                >
+                  Speichern
+                </button>
+              </div>
+            </div>
+            <button (click)="openModal()" class="button-event">
+              Eingabefeld öffnen
+            </button>
+          </td>
+          <td>
+            <form action="/action_page.php">
+              <button class="button-event" id="datei" (click)="click()">
+                Datei Auswählen
+              </button>
+              <input type="file" id="myFile" name="filename" accept=".pdf" />
+
+              <button type="button" class="button-event" (click)="openPDF()">
+                Lernzettel Öffnen
+              </button>
+            </form>
+          </td>
+          <td>
+            <button
+              class="btn btn-danger"
+              id="loeschen"
+              (click)="deleteEvent(event)"
+            >
+              Löschen
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <ng-template #modalContent let-close="close">
+    <div class="modal-header">
+      <h5 class="modal-title">Event action occurred</h5>
+      <button type="button" class="close" (click)="close()">
+        <span aria-hidden="true">&times;</span>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div>
+        Action:
+        <pre>{{ modalData?.action }}</pre>
+      </div>
+      <div>
+        Event:
+        <pre>{{ modalData?.event | json }}</pre>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-outline-secondary" (click)="close()">
+        Ok
+      </button>
+    </div>
+  </ng-template>
+</body>
